@@ -9,5 +9,8 @@
     "client": "cd client && npm start",
     "install-client": "cd client && npm install",
     "build-client": "cd client && npm run build"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
   }
 }
