@@ -1,9 +1,10 @@
 const express = require('express');
 const cors = require('cors');
-const admin = require('firebase-admin');
 require('dotenv').config();
-
+const admin = require('./config/firebaseAdminInit');
+const db = admin.firestore();
 const app = express();
+const { getUserTimesheets } = require('./services/timesheetService');
 
 // Middlewares
 app.use(cors());
@@ -11,14 +12,6 @@ app.use(express.json());
 
 // Example route
 app.get('/', (req, res) => res.send('Hello World!'));
-
-var serviceAccount = require('./config/serviceAccountKey.json');
-
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
-
-const db = admin.firestore();
 
 app.get('/fetchSampleCollection', async (req, res) => {
     console.log('Fetching collection');
@@ -37,6 +30,33 @@ app.get('/fetchSampleCollection', async (req, res) => {
     }
 });
 
+app.get('/fetchUsers', async (req, res) => {
+    console.log('Fetching Users');
+    try {
+        const usersRef = db.collection('Users');
+        const snapshot = await usersRef.get();
+        const documents = [];
+        snapshot.forEach(doc => {
+            documents.push({ id: doc.id, ...doc.data() });
+        });
+        res.status(200).json(documents);
+        console.log(documents);
+    } catch (error) {
+        console.error('Error fetching collection:', error);
+        res.status(500).send('Error fetching collection');
+    }
+});
+
+app.get('/timesheets', async (req, res) => {
+    try {
+        const userId = 'IWYMKCKALqI7MtWsCxUH'; // Or however you're getting the authenticated user's ID
+        const timesheets = await getUserTimesheets(userId);
+        res.json(timesheets);
+    } catch (error) {
+        console.error('Failed to get timesheets:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
 
 app.get('/api/test', (req, res) => {
     res.json({ message: 'Connection successful!' });
